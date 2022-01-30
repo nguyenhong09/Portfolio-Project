@@ -2,6 +2,8 @@
 
 Queries for Tableau Project
 
+Data source: https://www.kaggle.com/kritikseth/us-airbnb-open-data
+
 */
 
 
@@ -28,3 +30,5 @@ GROUP BY room_type
 SELECT city, SUM(number_of_reviews) total_reviews, sum(availability_365) availability, AVG(price) avg_price
 FROM [Portfolio Project].[dbo].[AB_US_2020]
 GROUP BY city
+
+
