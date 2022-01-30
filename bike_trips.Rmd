@@ -1,0 +1,187 @@
+---
+title: "Bike_trips project"
+author: "Hong Nguyen"
+date: "12/10/2021"
+data source: "https://divvy-tripdata.s3.amazonaws.com/index.html"
+output: html_document
+---
+
+## Setting up environment 
+Notes: setting up my R environment by loading the 'tidyverse', 'lubridate' and 'ggplot2' packages
+
+```{r install packages}
+install.packages("tidyverse")
+install.packages("lubridate")
+install.packages("ggplot2")
+library("tidyverse")
+library("lubridate")
+library("ggplot2")
+```
+## Setting working directory to call data
+```{r set up WD}
+getwd()
+setwd("C:/Users/An/Desktop/data analyst google/capstone project/bike_trips_case/R")
+```
+
+## Collecting data
+Notes: upload bike_trips dataset
+
+```{r collect data}
+m12_2020 <- read.csv("202012-divvy-tripdata.csv")
+m1_2021 <- read.csv("202101-divvy-tripdata.csv")
+m2_2021 <- read.csv("202102-divvy-tripdata.csv")
+m3_2021 <- read.csv("202103-divvy-tripdata.csv")
+m4_2021 <- read.csv("202104-divvy-tripdata.csv")
+m5_2021 <- read.csv("202105-divvy-tripdata.csv")
+m6_2021 <- read.csv("202106-divvy-tripdata.csv")
+m7_2021 <- read.csv("202107-divvy-tripdata.csv")
+m8_2021 <- read.csv("202108-divvy-tripdata.csv")
+m9_2021 <- read.csv("202109-divvy-tripdata.csv")
+m10_2021 <- read.csv("202110-divvy-tripdata.csv")
+m11_2021 <- read.csv("202111-divvy-tripdata.csv")
+```
+## Checking if column names of the files match
+Notes: they have to match to be able to be joined into one file
+```{r columns checking}
+colnames(m12_2020)
+colnames(m1_2021)
+colnames(m2_2021)
+colnames(m3_2021)
+colnames(m4_2021)
+colnames(m5_2021)
+colnames(m6_2021)
+colnames(m7_2021)
+colnames(m8_2021)
+colnames(m9_2021)
+colnames(m10_2021)
+colnames(m11_2021)
+```
+## Combining 12 individual data frames into one big data frame
+
+```{r}
+all_trips <- bind_rows(m12_2020,m1_2021,m2_2021,m3_2021,m4_2021,m5_2021,m6_2021,m7_2021,m8_2021,m9_2021,m10_2021,m11_2021)
+```
+
+## Removing unnecessary data fields that are not going to be used in our analysis: lat, long
+
+```{r}
+all_trips <- all_trips %>%  select(-c(start_lat,start_lng,end_lat,end_lng))
+```
+
+## Quick summary of how many observations fall under each type of customer: casual vs member
+
+```{r}
+table(all_trips$member_casual)
+```
+
+## Adding date, day, month, year columns. This will allow us to be able to aggregate ride data for each month, day, or year
+
+```{r}
+all_trips$date <- as.Date(all_trips$started_at)
+all_trips$month <- format(as.Date(all_trips$date), "%m")
+all_trips$day <- format(as.Date(all_trips$date), "%d")
+all_trips$year <- format(as.Date(all_trips$date), "%Y")
+```
+
+## Adding another column to specify the day of the week for each ride
+
+```{r}
+all_trips$day_of_week <- format(as.Date(all_trips$date), "%A")
+```
+
+## Add a "ride_length" calculation to "all_trips" (in seconds)
+
+```{r}
+all_trips$ride_length <-difftime(all_trips$ended_at,all_trips$started_at)
+```
+
+## Inspecting the structure of the columns
+```{r}
+str(all_trips)
+```
+
+## The "ride_length" is in numeric so that we can run the duration calculations
+
+## Next, we remove bad data including trips with duration(ride_length) is equal to or less than 0. This will be a new verison of the dataframe (all_trips_v4)
+
+```{r}
+all_trips_v4 <- all_trips[all_trips$ride_length > 0,]
+```
+
+## Conducting descriptive analysis
+
+```{r}
+mean(all_trips_v4$ride_length)
+median(all_trips_v4$ride_length)
+max(all_trips_v4$ride_length)
+min(all_trips_v4$ride_length)
+```
+
+## Now we conduct those calculations for each type of users; casual vs member
+
+```{r}
+aggregate(all_trips_v4$ride_length~all_trips_v4$member_casual,FUN=mean)
+aggregate(all_trips_v4$ride_length~all_trips_v4$member_casual,FUN=median)
+aggregate(all_trips_v4$ride_length~all_trips_v4$member_casual,FUN=max)
+aggregate(all_trips_v4$ride_length~all_trips_v4$member_casual,FUN=min)
+```
+
+## Notice that the days of the week are out of order. Thus, we rearrange the days of the week into order.
+
+```{r}
+all_trips_v4$day_of_week <- ordered(all_trips_v4$day_of_week,levels=c("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"))
+```
+
+## Now we can see the average ride time for each day for casual and member customers with the days in order.
+
+```{r}
+aggregate(all_trips_v4$ride_length~all_trips_v4$member_casual+all_trips_v4$day_of_week,FUN=mean)
+
+```
+
+## Analyzing data by user type and weekday. Running calculations for number of rides and average duration.
+
+```{r}
+all_trips_v4 %>%
+  group_by(member_casual,day_of_week)%>%
+  summarise(number_of_rides=n(),average_duration=mean(ride_length))%>%
+  arrange(member_casual,day_of_week)%>%
+  print(width=Inf)
+```
+## Visualizing the number of rides by user type
+
+```{r}
+all_trips_v4 %>%
+  group_by(member_casual,day_of_week)%>%
+  summarise(number_of_rides=n(),average_duration=mean(ride_length))%>%
+  arrange(member_casual,day_of_week)%>%
+  ggplot(aes(x = day_of_week, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+## Visualizing average duration by user type 
+
+```{r}
+all_trips_v4 %>%
+  group_by(member_casual,day_of_week)%>%
+  summarise(number_of_rides=n(),average_duration=mean(ride_length))%>%
+  arrange(member_casual,day_of_week)%>%
+  ggplot(aes(x = day_of_week, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+## Export a summary file for further anlysis later 
+
+```{r}
+counts<-aggregate(all_trips_v4$ride_length~all_trips_v4$member_casual+all_trips_v4$day_of_week, FUN = mean)
+
+```
+
+## Save the above file as a csv file
+
+```{r}
+write.csv(counts,"C:\\Users\\An\\Desktop\\data analyst google\\capstone\\avg_ride_length.csv")
+```
+
