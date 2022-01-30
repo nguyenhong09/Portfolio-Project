@@ -1,9 +1,9 @@
 ---
-title: "Bike_trips project"
-author: "Hong Nguyen"
-date: "12/10/2021"
-data source: "https://divvy-tripdata.s3.amazonaws.com/index.html"
-output: html_document
+
+Bike-share Analysis using R (presentation available in Kaggle notebook https://www.kaggle.com/hongnguyen999/bike-share-trip-analysis)
+
+Data source: "https://divvy-tripdata.s3.amazonaws.com/index.html"
+
 ---
 
 ## Setting up environment 
@@ -179,9 +179,5 @@ counts<-aggregate(all_trips_v4$ride_length~all_trips_v4$member_casual+all_trips_
 
 ```
 
-## Save the above file as a csv file
 
-```{r}
-write.csv(counts,"C:\\Users\\An\\Desktop\\data analyst google\\capstone\\avg_ride_length.csv")
-```
 
