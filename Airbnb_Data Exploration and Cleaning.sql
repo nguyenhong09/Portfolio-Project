@@ -4,6 +4,8 @@ US_Airbnb_2020 Data Exploration
 
 Skills used: Data type converting, CTE's, Windows Functions, Aggregate Functions, Cleaning data, Creating Views
 
+Data source: https://www.kaggle.com/kritikseth/us-airbnb-open-data
+
 */
 
 
